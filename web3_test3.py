@@ -10,6 +10,7 @@ web3.isConnected()
 web3.eth.defaultAccount = web3.eth.accounts[0]
 
 abi = json.loads('[{"constant":false,"inputs":[{"name":"_greeting","type":"string"}],"name":"setGreeting","outputs":[],"payable":false,"stateMutability":"nonpayable","type":"function"},{"constant":true,"inputs":[],"name":"greet","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"constant":true,"inputs":[],"name":"greeting","outputs":[{"name":"","type":"string"}],"payable":false,"stateMutability":"view","type":"function"},{"inputs":[],"payable":false,"stateMutability":"nonpayable","type":"constructor"}]')
+# Copied from Remix deployed contract
 address = Web3.toChecksumAddress("0xcf8c0C663C051787c62E6f7236746c4f92a63c46")
 
 contract = web3.eth.contract(address=address, abi=abi)
