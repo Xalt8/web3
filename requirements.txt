@@ -40,7 +40,7 @@ pycryptodome==3.10.1
 Pygments==2.9.0
 pyrsistent==0.17.3
 python-dateutil==2.8.1
-pywin32==300
+pypiwin32==223
 pyzmq==22.0.3
 requests==2.25.1
 rlp==2.0.1

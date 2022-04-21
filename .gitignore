@@ -1,3 +1,6 @@
 env 
 infura.txt
 .vscode/settings.json
+__pycache__/listner.cpython-310.pyc
+.gitignore
+.vscode/extensions.json
