@@ -4,7 +4,6 @@
 # Contract should take a secret number upon deployment. 
 # The secret number should be between 0-100
 # It should cost 10 Eth to deploy the contract
-# Each guess that a player makes will cost 1 Eth
 # Whoever makes the right guess will have the balance of the contract transfer to his address
 # Once the right guess is made the contract should not allow people to play
 
