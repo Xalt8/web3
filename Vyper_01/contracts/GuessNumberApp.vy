@@ -9,6 +9,26 @@
 # Once the right guess is made the contract should not allow people to play
 
 
+event Player_registered:
+    player_address: indexed(address)
+    time: uint256
+
+
+event Game_solved:
+    player_address: indexed(address)
+    time: uint256
+    game_balance: uint256
+    creator_balance: uint256
+
+
+event Guess_count_exceeded:
+    player_address: indexed(address)
+    time: uint256
+    game_balance: uint256
+    creator_balance: uint256
+
+
+
 secret_number: uint256
 game_creator: public(address)
 game_player: public(address)
@@ -36,7 +56,8 @@ def player_registration():
     assert self.active == True, "Contract is inactive!"
     assert msg.value == 1*(10**18), "You need to pay 1 Eth to play!"
     self.game_player = msg.sender  
-    self.creator_balance = self.creator_balance + msg.value # Add the player's fee to creator_balance        
+    self.creator_balance = self.creator_balance + msg.value # Add the player's fee to creator_balance
+    log Player_registered(msg.sender, block.timestamp)        
     
 
 @external
@@ -52,12 +73,14 @@ def play(_guessed_number:uint256) -> bool:
     if _guessed_number == self.secret_number:
         send(self.game_player, self.game_balance)
         send(self.game_creator, self.creator_balance)
+        log Game_solved(msg.sender, block.timestamp, self.game_balance, self.creator_balance)
         self.game_balance = 0
         self.creator_balance = 0
         self.active = False
     elif self.guess_count == 5:
         send(self.game_creator, self.game_balance)
         send(self.game_creator, self.creator_balance)
+        log Guess_count_exceeded(msg.sender, block.timestamp, self.game_balance, self.creator_balance)
         self.game_balance = 0
         self.creator_balance = 0
         self.active = False

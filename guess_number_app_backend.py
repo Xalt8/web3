@@ -10,10 +10,7 @@ import json
 NODE_PROVIDER = 'http://127.0.0.1:7545'
 web3_connection = Web3(Web3.HTTPProvider(NODE_PROVIDER))
 
-
-def set_default_account(account_num:int = 0):
-    ''' Sets the default account to 0 by default'''
-    web3_connection.eth.defaultAccount = web3_connection.eth.accounts[account_num]
+web3_connection.eth.defaultAccount = web3_connection.eth.accounts[0]
 
 
 def get_abi_byteCode(build_path: str) -> tuple:
@@ -32,11 +29,11 @@ def instantiate_contract(abi, byte_code):
     return web3_connection.eth.contract(abi=abi, bytecode=byte_code)
 
 
-def deploy_contract_get_tx_hash(secret_number:int, value:int):
+def deploy_contract_get_tx_hash(contract_inst, secret_number:int, value:int):
     assert value == 10, "You need 10 Eth to deploy this contract"
     assert 1 <= secret_number <= 10, "Secret number has to be between 1 & 10"
     transaction= {'from': web3_connection.eth.defaultAccount, 'value': web3_connection.toWei(value, 'ether')}
-    return contract_app.constructor(secret_number).transact(transaction)
+    return contract_inst.constructor(secret_number).transact(transaction)
 
 
 def get_tx_receipt(tx_hash):
@@ -51,37 +48,26 @@ def get_contract_instance(contract_address, abi):
     return web3_connection.eth.contract(address=contract_address, abi=abi)
 
 
-# Set the first account in Ganache to be the default account
-set_default_account(0)
+def get_address_from_private_key(private_key):
+    ''' Gets the account address/public key from private key'''
+    global web3_connection
+    return web3_connection.eth.account.from_key(private_key).address
 
-# Get the ABI & Byte Code of the contract
-abi, byte_code = get_abi_byteCode('Vyper_01/build/contracts/GuessNumberApp.json')
 
-# Instantiate the contract 
-contract_app = instantiate_contract(abi=abi, byte_code=byte_code)
-# contract_app = web3_connection.eth.contract(abi=abi, bytecode=byte_code)
+def main():
+    ''' Setup a game instance'''
+    
+    abi, byte_code = get_abi_byteCode('Vyper_01/build/contracts/GuessNumberApp.json')
+    contract_app = instantiate_contract(abi=abi, byte_code=byte_code)
+    tx_hash = deploy_contract_get_tx_hash(contract_inst=contract_app, secret_number=8, value=10)
+    tx_receipt = get_tx_receipt(tx_hash)
+    contract_address = get_contract_address(tx_receipt)
+    contract = get_contract_instance(contract_address=contract_address, abi=abi)
+    
+    print(f"\ncontract address: {contract_address}\n")    
 
-# Submit the transaction that deploys the contract from default account with 10 Ether
-# Call the constructor of the contract with the secret number
-tx_hash = deploy_contract_get_tx_hash(secret_number=8, value=10)
-
-# transaction= {'from':web3_connection.eth.defaultAccount, 'value':web3_connection.toWei(10, 'ether')}
-# tx_hash = contract_app.constructor(8).transact(transaction)
-
-# Wait for the transaction to be mined, and get the transaction receipt
-tx_receipt = get_tx_receipt(tx_hash)
-# tx_receipt = web3_connection.eth.waitForTransactionReceipt(tx_hash) 
-
-# Get the contract's address
-contract_address = get_contract_address(tx_receipt)
-
-# Create the contract instance with the address & ABI
-# contract = web3_connection.eth.contract(address=tx_receipt.contractAddress, abi=abi)
-contract = get_contract_instance(contract_address=contract_address, abi=abi)
-
-# Get the events of interest
-player_registration_event = contract.events.Player_registered()
 
 
 if __name__ == '__main__':
-    pass
+    main()
+

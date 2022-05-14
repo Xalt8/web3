@@ -4,3 +4,8 @@ infura.txt
 __pycache__/listner.cpython-310.pyc
 .gitignore
 .vscode/extensions.json
+token_dapp/__pycache__/token_dapp.cpython-310.pyc
+__pycache__/app_listner.cpython-310.pyc
+__pycache__/guess_number_app_backend.cpython-310.pyc
+__pycache__/guess_number_app_contract.cpython-310.pyc
+__pycache__/guess_number_app_anvil_server.cpython-310.pyc
