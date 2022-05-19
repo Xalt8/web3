@@ -1,6 +1,7 @@
 from web3 import Web3
 import time
 import json
+from hexbytes import HexBytes
 from guess_number_app_backend import web3_connection
 
 
@@ -15,12 +16,6 @@ def get_contract(contract_address, build_path):
     return contract
 
 
-def get_player_registered_event(contract):
-    ''' Takes a contract and returns the Player_registered() event'''
-    event_of_interest = contract.events.Player_registered()
-    return event_of_interest
-
-
 def handle_event(event, event_of_interest):
     receipt = web3_connection.eth.wait_for_transaction_receipt(event['transactionHash'])
     result = event_of_interest.processReceipt(receipt)
@@ -33,22 +28,51 @@ def handle_event(event, event_of_interest):
         print('Guess count exceeded - Game Over!')
 
 
-def log_loop(event_filter, poll_interval, event_of_interest):
+def handle_player_registered_event(event, contract):
+    event_of_interest = contract.events.Player_registered()
+    receipt = web3_connection.eth.wait_for_transaction_receipt(event['transactionHash'])
+    result = event_of_interest.processReceipt(receipt)
+    print(result)
+
+
+def handle_game_solved_event(event, contract):
+    event_of_interest = contract.events.Game_solved()
+    receipt = web3_connection.eth.wait_for_transaction_receipt(event['transactionHash'])
+    result = event_of_interest.processReceipt(receipt)
+    print(result)
+
+
+# def log_loop(event_filter, poll_interval, event_of_interest):
+#     while True:
+#         for event in event_filter.get_new_entries():
+#             handle_event(event, event_of_interest)
+#             time.sleep(poll_interval)
+
+
+def log_loop2(event_filter, poll_interval, contract):
     while True:
-        for event in event_filter.get_new_entries():
-            handle_event(event, event_of_interest)
+        for Player_registered in event_filter.get_new_entries():
+            handle_player_registered_event(Player_registered, contract)
+        for Game_solved in event_filter.get_new_entries():
+            handle_game_solved_event(Game_solved, contract)
+
             time.sleep(poll_interval)
+
 
 
 def listen(contract_address, build_path):
     block_filter = web3_connection.eth.filter({'fromBlock':'latest', 'address': contract_address})
     contract = get_contract(contract_address, build_path)
-    log_loop(event_filter=block_filter, poll_interval=2, event_of_interest=get_player_registered_event(contract))
+    # log_loop(event_filter=block_filter, poll_interval=2, event_of_interest=get_player_registered_event(contract))
+    log_loop2(event_filter=block_filter, poll_interval=2, contract=contract)
+    
 
-
+with open('contract_address.txt', 'r') as f:
+    CONTRACT_ADDRESS = f.readline()
 
 
 if __name__ == '__main__':
 
-    listen(contract_address="0x2Ca1Ccdb67FFfe598d012818bB6f68fE6AE708C0", build_path="Vyper_01/build/contracts/GuessNumberApp.json")
+    print('Listening...')
+    listen(contract_address=CONTRACT_ADDRESS, build_path="Vyper_01/build/contracts/GuessNumberApp.json")
     

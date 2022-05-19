@@ -6,8 +6,12 @@ from web3 import Web3
 anvil.server.connect('server_QU6WQ53GJBCZ7MY7GOGX7YRZ-TU5EUJ7KKAH53HP3')
 
 abi, _ = get_abi_byteCode('Vyper_01/build/contracts/GuessNumberApp.json')
-contract = web3_connection.eth.contract(address='0x2Ca1Ccdb67FFfe598d012818bB6f68fE6AE708C0', abi=abi)
 
+with open('contract_address.txt', 'r') as f:
+    CONTRACT_ADDRESS = f.readline()
+
+contract = web3_connection.eth.contract(address=CONTRACT_ADDRESS, abi=abi)
+    
 
 @anvil.server.callable
 def get_game_balance() -> int:
@@ -25,6 +29,11 @@ def get_guess_count() -> int:
 def get_players_address():
     global contract
     return contract.functions.game_player().call()
+
+@anvil.server.callable
+def is_game_active() -> bool:
+    global contract
+    return contract.functions.active().call()
 
 
 @anvil.server.callable
@@ -66,20 +75,43 @@ def player_registration(player_address, signature):
     signed_transaction = web3_connection.eth.account.sign_transaction(function_call, signature)
     tx_hash = web3_connection.eth.send_raw_transaction(signed_transaction.rawTransaction)
     tx_receipt = web3_connection.eth.wait_for_transaction_receipt(tx_hash) 
+    
+    process_logs = contract.events.Player_registered().processReceipt(tx_receipt)
+    print('In player_registration() process_logs:')
+    print(process_logs)
     return tx_receipt.status
+
+
+def deconstruct_game_solved_log(game_solved_logs):
+    ''' Takes a log object and returns the event, player address
+        time, game balance, and creator balance '''
+    event_name = game_solved_logs[0]['event']
+    player_add, _time, game_bal, creat_bal = [v for _, v in game_solved_logs[0]['args'].items()]
+    return event_name, player_add, _time, game_bal, creat_bal
 
 
 @anvil.server.callable
 def play(guessed_number, player_address):
     global contract
-    return contract.functions.play(guessed_number).call({'from':player_address})
+    tx_hash = contract.functions.play(guessed_number).transact({'from':player_address})
+    tx_receipt = web3_connection.eth.wait_for_transaction_receipt(tx_hash)
+    
+    # game_solved_filter = contract.events.Game_solved.createFilter(fromBlock=0, toBlock='latest')
+    # print('\ngame_solved_filter:')
+    # print(game_solved_filter.get_new_entries())
+    game_solved_process_logs = contract.events.Game_solved().processReceipt(tx_receipt)
+    
+    if len(game_solved_process_logs) !=0:
+        return deconstruct_game_solved_log(game_solved_process_logs)
+
     
 
 
 if __name__ == '__main__':
-    print("\nConnected to Ganache" if web3_connection.isConnected() else "Not connected to Ganache")
+    print("\nConnected to Ganache" if web3_connection.isConnected() else "Not connected to Ganache\n")
+    print(f'Contract address: {CONTRACT_ADDRESS}' if CONTRACT_ADDRESS else 'No contract')
 
-    
+
     anvil.server.wait_forever()
 
     

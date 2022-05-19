@@ -74,16 +74,17 @@ def play(_guessed_number:uint256) -> bool:
         send(self.game_player, self.game_balance)
         send(self.game_creator, self.creator_balance)
         log Game_solved(msg.sender, block.timestamp, self.game_balance, self.creator_balance)
+        self.active = False
         self.game_balance = 0
         self.creator_balance = 0
-        self.active = False
     elif self.guess_count == 5:
         send(self.game_creator, self.game_balance)
         send(self.game_creator, self.creator_balance)
         log Guess_count_exceeded(msg.sender, block.timestamp, self.game_balance, self.creator_balance)
+        self.active = False
         self.game_balance = 0
         self.creator_balance = 0
-        self.active = False
+        
 
     return True
 
