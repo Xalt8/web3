@@ -1,6 +1,6 @@
 from web3 import Web3
 import json
-
+from os.path import exists
 
 # Source: 
 # https://www.dappuniversity.com/articles/web3-py-intro
@@ -40,8 +40,24 @@ def get_tx_receipt(tx_hash):
     return web3_connection.eth.waitForTransactionReceipt(tx_hash)
 
 
+def write_contract_address_to_file(contract_address:str):
+    """ Deletes any existing address in the file and writes a 
+        new address to file. """
+    try:
+        f = open("contract_address.txt", "r+") 
+        f.seek(0)
+        f.truncate()
+    except FileNotFoundError:
+        print('contract_address.txt does not exists!')
+    # Write the address to file
+    with open('contract_address.txt', 'w') as f1:
+        f1.write(contract_address)
+
+
 def get_contract_address(tx_receipt):
-    return tx_receipt.contractAddress
+    contract_address = tx_receipt.contractAddress
+    write_contract_address_to_file(contract_address)
+    return contract_address 
 
 
 def get_contract_instance(contract_address, abi):
@@ -65,9 +81,11 @@ def main():
     contract = get_contract_instance(contract_address=contract_address, abi=abi)
     
     print(f"\ncontract address: {contract_address}\n")    
-
-
+    
 
 if __name__ == '__main__':
+    
+    print("\nConnected to Ganache" if web3_connection.isConnected() else "Not connected to Ganache\n")
+    
     main()
 
