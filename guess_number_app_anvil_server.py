@@ -82,7 +82,7 @@ def player_registration(player_address, signature):
     return tx_receipt.status
 
 
-def deconstruct_game_solved_log(game_solved_logs):
+def deconstruct_log(game_solved_logs):
     ''' Takes a log object and returns the event, player address
         time, game balance, and creator balance '''
     event_name = game_solved_logs[0]['event']
@@ -96,14 +96,13 @@ def play(guessed_number, player_address):
     tx_hash = contract.functions.play(guessed_number).transact({'from':player_address})
     tx_receipt = web3_connection.eth.wait_for_transaction_receipt(tx_hash)
     
-    # game_solved_filter = contract.events.Game_solved.createFilter(fromBlock=0, toBlock='latest')
-    # print('\ngame_solved_filter:')
-    # print(game_solved_filter.get_new_entries())
     game_solved_process_logs = contract.events.Game_solved().processReceipt(tx_receipt)
-    
-    if len(game_solved_process_logs) !=0:
-        return deconstruct_game_solved_log(game_solved_process_logs)
+    guess_count_exceed_process_logs = contract.events.Guess_count_exceeded().processReceipt(tx_receipt) 
 
+    if len(game_solved_process_logs) !=0:
+        return deconstruct_log(game_solved_process_logs)
+    elif len(guess_count_exceed_process_logs) !=0:
+        return deconstruct_log(guess_count_exceed_process_logs)
     
 
 
